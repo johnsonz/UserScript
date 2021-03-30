@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         知乎增强
-// @version      1.3.1
-// @author       X.I.U
-// @description  移除登录弹窗、一键收起回答、收起当前回答/评论（点击两侧空白处）、置顶显示时间、显示问题时间、区分问题文章、默认高清原图、默认站外直链
+// @version      1.3.2
+// @author       Johnson, fork from X.I.U
+// @description  移除登录弹窗、一键收起回答、收起当前回答/评论（点击两侧空白处）、置顶显示时间、显示问题时间、区分问题文章、默认高清原图、默认站外直链、隐藏标题栏
 // @match        *://www.zhihu.com/*
 // @match        *://zhuanlan.zhihu.com/*
 // @icon         https://static.zhihu.com/heifetz/favicon.ico
@@ -25,13 +25,15 @@ var menu_collapsedAnswer = GM_getValue('xiu2_menu_collapsedAnswer'),
     menu_allTime = GM_getValue('xiu2_menu_allTime'),
     menu_typeTips = GM_getValue('xiu2_menu_typeTips'),
     menu_directLink = GM_getValue('xiu2_menu_directLink'),
-    menu_collapsedAnswer_ID, menu_collapsedNowAnswer_ID, menu_publishTop_ID, menu_typeTips_ID, menu_allTime_ID, menu_directLink_ID, menu_feedBack_ID;
+    menu_appheader = GM_getValue('xiu2_menu_appheader'),
+    menu_collapsedAnswer_ID, menu_collapsedNowAnswer_ID, menu_publishTop_ID, menu_typeTips_ID, menu_allTime_ID, menu_directLink_ID, menu_feedBack_ID,menu_appheader_ID;
 if (menu_collapsedAnswer == null){menu_collapsedAnswer = true; GM_setValue('xiu2_menu_collapsedAnswer', menu_collapsedAnswer)};
 if (menu_collapsedNowAnswer == null){menu_collapsedNowAnswer = true; GM_setValue('xiu2_menu_collapsedNowAnswer', menu_collapsedNowAnswer)};
 if (menu_publishTop == null){menu_publishTop = true; GM_setValue('xiu2_menu_publishTop', menu_publishTop)};
 if (menu_allTime == null){menu_allTime = true; GM_setValue('xiu2_menu_allTime', menu_allTime)};
 if (menu_typeTips == null){menu_typeTips = true; GM_setValue('xiu2_menu_typeTips', menu_typeTips)};
 if (menu_directLink == null){menu_directLink = true; GM_setValue('xiu2_menu_directLink', menu_directLink)};
+if (menu_appheader == null){menu_appheader = true; GM_setValue('xiu2_menu_appheader', menu_appheader)};
 registerMenuCommand();
 
 // 注册脚本菜单
@@ -45,12 +47,14 @@ function registerMenuCommand() {
         GM_unregisterMenuCommand(menu_typeTips_ID);
         GM_unregisterMenuCommand(menu_directLink_ID);
         GM_unregisterMenuCommand(menu_feedBack_ID);
+        GM_unregisterMenuCommand(menu_appheader_ID);
         menu_collapsedAnswer = GM_getValue('xiu2_menu_collapsedAnswer');
         menu_collapsedNowAnswer = GM_getValue('xiu2_menu_collapsedNowAnswer');
         menu_publishTop = GM_getValue('xiu2_menu_publishTop');
         menu_allTime = GM_getValue('xiu2_menu_allTime');
         menu_typeTips = GM_getValue('xiu2_menu_typeTips');
         menu_directLink = GM_getValue('xiu2_menu_directLink');
+        menu_appheader = GM_getValue('xiu2_menu_appheader');
     }
 
     if (menu_collapsedAnswer){menu_collapsedAnswer_ = "√";}else{menu_collapsedAnswer_ = "×";}
@@ -59,6 +63,7 @@ function registerMenuCommand() {
     if (menu_allTime){menu_allTime_ = "√";}else{menu_allTime_ = "×";}
     if (menu_typeTips){menu_typeTips_ = "√";}else{menu_typeTips_ = "×";}
     if (menu_directLink){menu_directLink_ = "√";}else{menu_directLink_ = "×";}
+    if (menu_appheader){menu_appheader_ = "√";}else{menu_appheader_ = "×";}
 
     menu_collapsedAnswer_ID = GM_registerMenuCommand(`[ ${menu_collapsedAnswer_} ] 一键收起回答`, function(){menu_switch(menu_collapsedAnswer,'xiu2_menu_collapsedAnswer','一键收起回答')});
     menu_collapsedNowAnswer_ID = GM_registerMenuCommand(`[ ${menu_collapsedNowAnswer_} ] 收起当前回答/评论（点击两侧空白处）`, function(){menu_switch(menu_collapsedNowAnswer,'xiu2_menu_collapsedNowAnswer','收起当前回答')});
@@ -66,6 +71,7 @@ function registerMenuCommand() {
     menu_allTime_ID = GM_registerMenuCommand(`[ ${menu_allTime_} ] 完整显示时间`, function(){menu_switch(menu_allTime,'xiu2_menu_allTime','完整显示时间')});
     menu_typeTips_ID = GM_registerMenuCommand(`[ ${menu_typeTips_} ] 区分问题文章`, function(){menu_switch(menu_typeTips,'xiu2_menu_typeTips','区分问题文章')});
     menu_directLink_ID = GM_registerMenuCommand(`[ ${menu_directLink_} ] 默认站外直链`, function(){menu_switch(menu_directLink,'xiu2_menu_directLink','默认站外直链')});
+    menu_appheader_ID = GM_registerMenuCommand(`[ ${menu_appheader_} ] 隐藏标题`, function(){menu_switch(menu_appheader,'xiu2_menu_appheader','隐藏标题')});
     menu_feedBack_ID = GM_registerMenuCommand('反馈 & 建议', function () {window.GM_openInTab('https://github.com/XIU2/UserScript#xiu2userscript', {active: true,insert: true,setParent: true});});
 }
 
@@ -517,6 +523,17 @@ function addEventListener_DOMNodeInserted() {
     document.addEventListener('DOMNodeInserted', collapseNowComment); // 收起当前评论（监听点击事件，点击网页两侧空白处）
 }
 
+function hideAppHeader(){
+    let style = `/* 浏览回答时，向下翻隐藏顶栏（问题的标题）*/
+    header.is-hidden {
+        display: none;
+    }
+    `;
+    let styleLink = document.createElement('style');
+   
+    styleLink.innerHTML = style;
+    document.head.appendChild(styleLink);
+}
 
 // 监听 XMLHttpRequest 事件
 function EventXMLHttpRequest() {
@@ -612,4 +629,5 @@ function EventXMLHttpRequest() {
         setInterval(topTime_index, 300); //                             置顶显示时间
         EventXMLHttpRequest(); //                                       区分问题文章
     }
+    if(menu_appheader) setInterval(hideAppHeader, 100); 
 })();
